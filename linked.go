@@ -168,7 +168,7 @@ func (lq *Linked[T]) Iterator() <-chan T {
 	return ch
 }
 
-func (lq *Linked[T]) IteratorWithNoRemove() <-chan T {
+func (lq *Linked[T]) IteratorWithNoRemoveItem() <-chan T {
 	lq.lock.Lock()
 	defer lq.lock.Unlock()
 
