@@ -168,6 +168,35 @@ func (lq *Linked[T]) Iterator() <-chan T {
 	return ch
 }
 
+func (lq *Linked[T]) Remove(value T) {
+	lq.lock.Lock()
+	defer lq.lock.Unlock()
+
+	if lq.isEmpty() {
+		return
+	}
+
+	if lq.head.value == value {
+		lq.head = lq.head.next
+		lq.size--
+		return
+	}
+
+	pre := lq.head
+	current := lq.head.next
+	for current != nil {
+		if current.value == value {
+			pre.next = current.next
+			lq.size--
+			return
+		}
+		pre = current
+		next := current.next
+		current = next
+	}
+
+}
+
 func (lq *Linked[T]) IteratorWithNoRemoveItem() <-chan T {
 	lq.lock.Lock()
 	defer lq.lock.Unlock()
