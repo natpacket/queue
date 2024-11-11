@@ -168,6 +168,32 @@ func (lq *Linked[T]) Iterator() <-chan T {
 	return ch
 }
 
+func (lq *Linked[T]) IteratorWithNoRemove() <-chan T {
+	lq.lock.Lock()
+	defer lq.lock.Unlock()
+
+	ch := make(chan T)
+
+	elems := make([]T, 0, lq.size)
+
+	current := lq.head
+	for current != nil {
+		elems = append(elems, current.value)
+		next := current.next
+		current = next
+	}
+
+	go func() {
+		for _, e := range elems {
+			ch <- e
+		}
+
+		close(ch)
+	}()
+
+	return ch
+}
+
 // Clear removes and returns all elements from the queue.
 func (lq *Linked[T]) Clear() []T {
 	lq.lock.Lock()
