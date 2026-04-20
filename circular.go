@@ -120,18 +120,8 @@ func (q *Circular[T]) Clear() []T {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
-	elems := make([]T, 0, q.size)
+	elems := q.drainQueue()
 
-	for {
-		elem, err := q.get()
-		if err != nil {
-			break
-		}
-
-		elems = append(elems, elem)
-	}
-
-	// clear the queue
 	q.head = 0
 	q.tail = 0
 
@@ -141,8 +131,8 @@ func (q *Circular[T]) Clear() []T {
 // Iterator returns an iterator over the elements in the queue.
 // It removes the elements from the queue.
 func (q *Circular[T]) Iterator() <-chan T {
-	q.lock.RLock()
-	defer q.lock.RUnlock()
+	q.lock.Lock()
+	defer q.lock.Unlock()
 
 	// use a buffered channel to avoid blocking the iterator.
 	iteratorCh := make(chan T, q.size)
@@ -182,7 +172,7 @@ func (q *Circular[T]) Contains(elem T) bool {
 		return false // queue is empty, item not found
 	}
 
-	for i := q.head; i < q.size; i++ {
+	for i := 0; i < q.size; i++ {
 		idx := (q.head + i) % len(q.elems)
 
 		if q.elems[idx] == elem {
@@ -221,16 +211,38 @@ func (q *Circular[T]) get() (v T, _ error) {
 		return v, ErrNoElementsAvailable
 	}
 
+	item := q.pop()
+
+	return item, nil
+}
+
+func (q *Circular[T]) pop() (v T) {
 	item := q.elems[q.head]
+	q.elems[q.head] = *new(T) // clear popped slot for garbage collection
 	q.head = (q.head + 1) % len(q.elems)
 	q.size--
 
-	return item, nil
+	return item
 }
 
 // isEmpty returns true if the queue is empty.
 func (q *Circular[T]) isEmpty() bool {
 	return q.size == 0
+}
+
+// drainQueue collects and removes all elements from the queue.
+// It returns a slice containing all elements in their logical order.
+// Note: This method assumes the caller holds an appropriate lock.
+func (q *Circular[T]) drainQueue() []T {
+	n := q.size
+
+	elems := make([]T, n)
+
+	for i := 0; i < n; i++ {
+		elems[i] = q.pop()
+	}
+
+	return elems
 }
 
 // MarshalJSON serializes the Circular queue to JSON.
@@ -243,11 +255,11 @@ func (q *Circular[T]) MarshalJSON() ([]byte, error) {
 	}
 
 	// Collect elements in logical order from head to tail.
-	elements := make([]T, 0, q.size)
+	elements := make([]T, q.size)
 
 	for i := 0; i < q.size; i++ {
 		index := (q.head + i) % len(q.elems)
-		elements = append(elements, q.elems[index])
+		elements[i] = q.elems[index]
 	}
 
 	q.lock.RUnlock()

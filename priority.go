@@ -155,14 +155,7 @@ func (pq *Priority[T]) Reset() {
 	pq.lock.Lock()
 	defer pq.lock.Unlock()
 
-	if pq.elements.Len() > len(pq.initialElements) {
-		pq.elements.elems = (pq.elements.elems)[:len(pq.initialElements)]
-	}
-
-	if pq.elements.Len() < len(pq.initialElements) {
-		pq.elements.elems = make([]T, len(pq.initialElements))
-	}
-
+	pq.elements.elems = pq.elements.elems[:len(pq.initialElements)]
 	copy(pq.elements.elems, pq.initialElements)
 }
 
@@ -207,8 +200,8 @@ func (pq *Priority[T]) Clear() []T {
 // Iterator returns an iterator over the elements in the queue.
 // It removes the elements from the queue.
 func (pq *Priority[T]) Iterator() <-chan T {
-	pq.lock.RLock()
-	defer pq.lock.RUnlock()
+	pq.lock.Lock()
+	defer pq.lock.Unlock()
 
 	// use a buffered channel to avoid blocking the iterator.
 	iteratorCh := make(chan T, pq.elements.Len())

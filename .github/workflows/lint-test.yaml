@@ -11,15 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: stable
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           args: --timeout 5m
@@ -29,19 +29,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: stable
 
       - name: Test
         run: make test-ci
 
+      - name: Enforce 100% coverage
+        run: |
+          go tool cover -func=coverage.txt
+          total=$(go tool cover -func=coverage.txt | awk '/^total:/ {print $3}')
+          if [ "$total" != "100.0%" ]; then
+            echo "::error::coverage $total is below required 100.0%"
+            go tool cover -func=coverage.txt | awk '$3 != "100.0%" && NF == 3'
+            exit 1
+          fi
+          echo "coverage: $total"
+
       - name: Upload coverage report
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.txt
+          files: ./coverage.txt
           flags: unittests
