@@ -269,19 +269,19 @@ func main() {
 
 ## Benchmarks 
 
-Results as of October 2023.
+Run locally with `go test -bench=. -benchmem -benchtime=3s -count=3`. Reported numbers are per-operation timings and allocations; absolute values vary by hardware, but the shape (zero-alloc reads everywhere, zero-alloc offer/get for Circular and Linked) should be stable.
 
 ```text
-BenchmarkBlockingQueue/Peek-8           84873882                13.98 ns/op            0 B/op          0 allocs/op
-BenchmarkBlockingQueue/Get_Offer-8      27135865                47.00 ns/op           44 B/op          0 allocs/op
-BenchmarkBlockingQueue/Offer-8          53750395                25.40 ns/op           43 B/op          0 allocs/op
-BenchmarkCircularQueue/Peek-8           86001980                13.76 ns/op            0 B/op          0 allocs/op
-BenchmarkCircularQueue/Get_Offer-8      32379159                36.83 ns/op            0 B/op          0 allocs/op
-BenchmarkCircularQueue/Offer-8          63956366                18.77 ns/op            0 B/op          0 allocs/op
-BenchmarkLinkedQueue/Peek-8             1000000000              0.4179 ns/op           0 B/op          0 allocs/op
-BenchmarkLinkedQueue/Get_Offer-8        61257436                18.48 ns/op           16 B/op          1 allocs/op
-BenchmarkLinkedQueue/Offer-8            38975062                30.74 ns/op           16 B/op          1 allocs/op
-BenchmarkPriorityQueue/Peek-8           86633734                14.02 ns/op            0 B/op          0 allocs/op
-BenchmarkPriorityQueue/Get_Offer-8      29347177                39.88 ns/op            0 B/op          0 allocs/op
-BenchmarkPriorityQueue/Offer-8          40117958                31.37 ns/op           54 B/op          0 allocs/op
+BenchmarkBlockingQueue/Peek                  3.8 ns/op       0 B/op   0 allocs/op
+BenchmarkBlockingQueue/Get_Offer            22.9 ns/op       8 B/op   1 allocs/op
+BenchmarkBlockingQueue/Offer                13.0 ns/op      49 B/op   0 allocs/op
+BenchmarkCircularQueue/Peek                  3.9 ns/op       0 B/op   0 allocs/op
+BenchmarkCircularQueue/Get_Offer            13.9 ns/op       0 B/op   0 allocs/op
+BenchmarkCircularQueue/Offer                 6.5 ns/op       0 B/op   0 allocs/op
+BenchmarkLinkedQueue/Peek                    3.9 ns/op       0 B/op   0 allocs/op
+BenchmarkLinkedQueue/Get_Offer              14.7 ns/op       0 B/op   0 allocs/op
+BenchmarkLinkedQueue/Offer                  22.7 ns/op      16 B/op   1 allocs/op
+BenchmarkPriorityQueue/Peek                  3.9 ns/op       0 B/op   0 allocs/op
+BenchmarkPriorityQueue/Get_Offer            18.1 ns/op       0 B/op   0 allocs/op
+BenchmarkPriorityQueue/Offer                17.1 ns/op      48 B/op   0 allocs/op
 ```

@@ -22,6 +22,66 @@ func TestLinked(t *testing.T) {
 	t.Run("Reset", testLinkedReset)
 	t.Run("Iterator", testLinkedIterator)
 	t.Run("MarshalJSON", testLinkedMarshalJSON)
+	t.Run("OfferReusesPoppedNode", testLinkedOfferReusesPoppedNode)
+	t.Run("DrainBeyondFreeCap", testLinkedDrainBeyondFreeCap)
+}
+
+// testLinkedOfferReusesPoppedNode drives the free-list-has-node branch
+// of the internal node recycling.
+func testLinkedOfferReusesPoppedNode(t *testing.T) {
+	t.Parallel()
+
+	linkedQueue := queue.NewLinked([]int{1, 2, 3})
+
+	got, err := linkedQueue.Get()
+	if err != nil || got != 1 {
+		t.Fatalf("get: %d %v", got, err)
+	}
+
+	// This Offer reuses the node just released by Get.
+	if err := linkedQueue.Offer(4); err != nil {
+		t.Fatalf("offer: %v", err)
+	}
+
+	cleared := linkedQueue.Clear()
+	expected := []int{2, 3, 4}
+
+	if !reflect.DeepEqual(expected, cleared) {
+		t.Fatalf("expected %v got %v", expected, cleared)
+	}
+}
+
+// testLinkedDrainBeyondFreeCap drives the cap-reached branch of the
+// internal recycle() so the free list stops growing past its cap.
+func testLinkedDrainBeyondFreeCap(t *testing.T) {
+	t.Parallel()
+
+	// Use a size that exceeds the free-list cap so the cap-reached
+	// branch of recycle() executes.
+	const n = 128
+
+	linkedQueue := queue.NewLinked[int](nil)
+
+	for i := 0; i < n; i++ {
+		if err := linkedQueue.Offer(i); err != nil {
+			t.Fatalf("offer %d: %v", i, err)
+		}
+	}
+
+	for i := 0; i < n; i++ {
+		got, err := linkedQueue.Get()
+		if err != nil {
+			t.Fatalf("get %d: %v", i, err)
+		}
+
+		if got != i {
+			t.Fatalf("get %d: want %d got %d", i, i, got)
+		}
+	}
+
+	if !linkedQueue.IsEmpty() {
+		t.Fatal("queue should be empty")
+	}
 }
 
 func testLinkedGet(t *testing.T) {
